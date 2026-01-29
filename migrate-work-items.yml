@@ -38,10 +38,10 @@ on:
         required: true
         type: boolean
         default: 'true'
-      #gh_assigned_to_user_suffix:
-       # description: 'EMU suffix'
-        #required: true
-        #default: '_corp'
+      gh_assigned_to_user_suffix:
+        description: 'EMU suffix'
+        required: true
+        default: '_corp'
       gh3_add_ado_comments:
         description: 'Add ADO Comments'
         required: true
