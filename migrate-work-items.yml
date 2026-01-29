@@ -6,15 +6,15 @@ on:
       ado-org:
         description: 'ado-org'
         required: true
-        default: 'jjohanning0798'
+        default: 'UMCom_DefaultCollection'
       ado-project:
         description: 'ado-project'
         required: true
-        default: 'PartsUnlimited'
+        default: 'Sitecore_10_3'
       ado_area_path:
         description: 'ADO area path to migrate - uses the UNDER operator'
         required: true
-        default: 'migrate'
+        default: 'Sitecore_10_3'
       ado_migrate_closed_workitems:
         description: 'Migrate closed work items'
         required: true
@@ -28,21 +28,21 @@ on:
       gh-org:
         description: 'gh-org'
         required: true
-        default: 'joshjohanning-org'
+        default: 'Testorgadotogh'
       gh-repo:
         description: 'gh-org'
         required: true
-        default: 'migrate-ado-workitems'
+        default: 'test-org-demo'
       gh_update_assigned_to:
         description: 'Update Assigned To'
         required: true
         type: boolean
         default: 'true'
-      gh_assigned_to_user_suffix:
-        description: 'EMU suffix'
-        required: true
-        default: '_corp'
-      gh_add_ado_comments:
+      #gh_assigned_to_user_suffix:
+       # description: 'EMU suffix'
+        #required: true
+        #default: '_corp'
+      gh3_add_ado_comments:
         description: 'Add ADO Comments'
         required: true
         type: boolean
