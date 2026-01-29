@@ -65,15 +65,15 @@ if (!$ado_migrate_closed_workitems) {
     $closed_wiql = "[State] <> 'Done' and [State] <> 'Closed' and [State] <> 'Resolved' and [State] <> 'Removed' and"
 }
 # List of IDs
-$idsList = "11804, 11807, 11808, 11809, 11810, 11811, 11812, 11813, 11814, 11833, 11834, 11837, 11839, 11840, 11841, 11842, 11843, 11844, 11847, 11849, 11850, 11852, 11855, 11856, 11857, 11869, 11872, 11890, 11891"   # comma-separated string
+#$idsList = "11804, 11807, 11808, 11809, 11810, 11811, 11812, 11813, 11814, 11833, 11834, 11837, 11839, 11840, 11841, 11842, 11843, 11844, 11847, 11849, 11850, 11852, 11855, 11856, 11857, 11869, 11872, 11890, 11891"   # comma-separated string
 
 # Modified WIQL using IN
-$wiql = "SELECT [System.Id], [System.Title], [System.Tags] 
-         FROM workitems 
-         WHERE [System.Id] IN ($idsList) 
-         AND not [System.Tags] Contains 'copied-to-github' 
-         ORDER BY [System.Id]"
-# $wiql = "select [ID], [Title], [System.Tags] from workitems where $closed_wiql [System.AreaPath] UNDER '$ado_area_path' and not [System.Tags] Contains 'copied-to-github' order by [ID]";
+#$wiql = "SELECT [System.Id], [System.Title], [System.Tags] 
+ #        FROM workitems 
+  #       WHERE [System.Id] IN ($idsList) 
+   #      AND not [System.Tags] Contains 'copied-to-github' 
+    #     ORDER BY [System.Id]"
+$wiql = "select [ID], [Title], [System.Tags] from workitems where $closed_wiql [System.AreaPath] UNDER '$ado_area_path' and not [System.Tags] Contains 'copied-to-github' order by [ID]";
 
 $query=az boards query --wiql $wiql | ConvertFrom-Json
 
