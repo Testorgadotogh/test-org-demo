@@ -52,38 +52,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4 
-      
+      - uses: actions/checkout@v4
+
       - name: get az and az devops version
         run: az --version
 
       - name: get gh version
         run: gh --version
-
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v4
-
-      - name: Install Azure DevOps Extension
-        run: |
-          if ! az extension list --query "[?name=='azure-devops'].name" -o tsv | grep -q azure-devops; then
-            echo "Installing Azure DevOps extension..."
-            az extension add --name azure-devops
-          else
-            echo "Azure DevOps extension already installed, updating..."
-            az extension update --name azure-devops
-          fi
-
-      - name: Login to Azure DevOps
-        run: |
-          echo "${{ secrets.ADO_PAT }}" | az devops login
-
-      - name: Configure Defaults
-        run: |
-          az devops configure --defaults organization="https://dev.azure.com/${{ github.event.inputs.ado-org }}" project="${{ github.event.inputs.ado-project }}"
-
-      - name: Force JSON output
-        run: |
-          az config set core.output=json
 
       # doesn't work with the (unofficial) issue migration API?
       # - uses: actions/create-github-app-token@v1
@@ -94,58 +69,29 @@ jobs:
       #     owner: ${{ github.repository_owner }}
       
       - name: run migration
-        env:
-          ADO_PAT: ${{ secrets.ADO_PAT }}
-          GH_PAT: ${{ secrets.GH_PAT }}
         shell: bash
         run: |
-          echo "Starting migration..."
-          
-          # Verify PATs are set (without displaying actual values)
-          if [ -z "$ADO_PAT" ]; then
-            echo "ERROR: ADO_PAT is not set or empty!"
-            exit 1
-          else
-            echo "ADO_PAT is set (length: ${#ADO_PAT} characters)"
-          fi
-          
-          if [ -z "$GH_PAT" ]; then
-            echo "ERROR: GH_PAT is not set or empty!"
-            exit 1
-          else
-            echo "GH_PAT is set (length: ${#GH_PAT} characters)"
-          fi
-
           ado_migrate_closed_workitems_param=""
           ado_production_run_param=""
           gh_update_assigned_to_param=""
           gh_add_ado_comments_param=""
 
-          [ "${{ github.event.inputs.ado_migrate_closed_workitems }}" = "true" ] && ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
-          [ "${{ github.event.inputs.ado_production_run }}" = "true" ] && ado_production_run_param="--ado_production_run"
-          [ "${{ github.event.inputs.gh_update_assigned_to }}" = "true" ] && gh_update_assigned_to_param="--gh_update_assigned_to"
-          [ "${{ github.event.inputs.gh_add_ado_comments }}" = "true" ] && gh_add_ado_comments_param="--gh_add_ado_comments"
-
-          # Find the PowerShell script file (handles files with (1) suffix)
-          SCRIPT_FILE=$(find . -name "ado_workitems_to_github_issues*.ps1" -type f | head -n 1)
-          if [ -z "$SCRIPT_FILE" ]; then
-            echo "ERROR: PowerShell script not found!"
-            exit 1
+          if [ "${{ github.event.inputs.ado_migrate_closed_workitems }}" == "true" ]; then
+            ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
           fi
-          echo "Using script: $SCRIPT_FILE"
 
-          pwsh "$SCRIPT_FILE" \
-            -ado_pat "$ADO_PAT" \
-            -ado_org "${{ github.event.inputs.ado-org }}" \
-            -ado_project "${{ github.event.inputs.ado-project }}" \
-            -ado_area_path "${{ github.event.inputs.ado_area_path }}" \
-            $ado_migrate_closed_workitems_param \
-            $ado_production_run_param \
-            -gh_pat "$GH_PAT" \
-            -gh_org "${{ github.event.inputs.gh-org }}" \
-            -gh_repo "${{ github.event.inputs.gh-repo }}" \
-            $gh_update_assigned_to_param \
-            -gh_assigned_to_user_suffix "${{ github.event.inputs.gh_assigned_to_user_suffix }}" \
-            $gh_add_ado_comments_param
+          if [ "${{ github.event.inputs.ado_production_run }}" == "true" ]; then
+            ado_production_run_param="--ado_production_run"
+          fi
+
+          if [ "${{ github.event.inputs.gh_update_assigned_to }}" == "true" ]; then
+            gh_update_assigned_to_param="--gh_update_assigned_to"
+          fi
+
+          if [ "${{ github.event.inputs.gh_add_ado_comments }}" == "true" ]; then
+            gh_add_ado_comments_param="--gh_add_ado_comments"
+          fi
+
+          pwsh ./ado_workitems_to_github_issues.ps1 -ado_pat "${{ secrets.ADO_PAT }}" -ado_org "${{ github.event.inputs.ado-org }}" -ado_project "${{ github.event.inputs.ado-project }}" -ado_area_path "${{ github.event.inputs.ado_area_path }}" $ado_migrate_closed_workitems_param $ado_production_run_param -gh_pat "${{ secrets.GH_PAT }}" -gh_org "${{ github.event.inputs.gh-org }}" -gh_repo "${{ github.event.inputs.gh-repo }}" $gh_update_assigned_to_param -gh_assigned_to_user_suffix "${{ github.event.inputs.gh_assigned_to_user_suffix }}" $gh_add_ado_comments_param
 
           echo "Migration finished."
