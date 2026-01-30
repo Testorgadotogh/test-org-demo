@@ -30,7 +30,7 @@ on:
         required: true
         default: 'Testorgadotogh'
       gh-repo:
-        description: 'gh-org'
+        description: 'gh-repo'
         required: true
         default: 'test-org-demo'
       gh_update_assigned_to:
@@ -59,9 +59,19 @@ jobs:
 
       - name: get gh version
         run: gh --version
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v4
+
       - name: Install Azure DevOps Extension
         run: |
-          az extension add --name azure-devops
+          if ! az extension list --query "[?name=='azure-devops'].name" -o tsv | grep -q azure-devops; then
+            echo "Installing Azure DevOps extension..."
+            az extension add --name azure-devops
+          else
+            echo "Azure DevOps extension already installed, updating..."
+            az extension update --name azure-devops
+          fi
 
       - name: Login to Azure DevOps
         run: |
@@ -69,7 +79,7 @@ jobs:
 
       - name: Configure Defaults
         run: |
-          az devops configure --defaults organization=https://code.umcom.org/${{ github.event.inputs.ado-org }} project=${{ github.event.inputs.ado-project }}
+          az devops configure --defaults organization="https://dev.azure.com/${{ github.event.inputs.ado-org }}" project="${{ github.event.inputs.ado-project }}"
 
       - name: Force JSON output
         run: |
@@ -111,23 +121,31 @@ jobs:
           gh_update_assigned_to_param=""
           gh_add_ado_comments_param=""
 
-          [ "${{ inputs.ado_migrate_closed_workitems }}" = "true" ] && ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
-          [ "${{ inputs.ado_production_run }}" = "true" ] && ado_production_run_param="--ado_production_run"
-          [ "${{ inputs.gh_update_assigned_to }}" = "true" ] && gh_update_assigned_to_param="--gh_update_assigned_to"
-          [ "${{ inputs.gh_add_ado_comments }}" = "true" ] && gh_add_ado_comments_param="--gh_add_ado_comments"
+          [ "${{ github.event.inputs.ado_migrate_closed_workitems }}" = "true" ] && ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
+          [ "${{ github.event.inputs.ado_production_run }}" = "true" ] && ado_production_run_param="--ado_production_run"
+          [ "${{ github.event.inputs.gh_update_assigned_to }}" = "true" ] && gh_update_assigned_to_param="--gh_update_assigned_to"
+          [ "${{ github.event.inputs.gh_add_ado_comments }}" = "true" ] && gh_add_ado_comments_param="--gh_add_ado_comments"
 
-          pwsh ./ado_workitems_to_github_issues.ps1 \
+          # Find the PowerShell script file (handles files with (1) suffix)
+          SCRIPT_FILE=$(find . -name "ado_workitems_to_github_issues*.ps1" -type f | head -n 1)
+          if [ -z "$SCRIPT_FILE" ]; then
+            echo "ERROR: PowerShell script not found!"
+            exit 1
+          fi
+          echo "Using script: $SCRIPT_FILE"
+
+          pwsh "$SCRIPT_FILE" \
             -ado_pat "$ADO_PAT" \
-            -ado_org "${{ inputs.ado-org }}" \
-            -ado_project "${{ inputs.ado-project }}" \
-            -ado_area_path "${{ inputs.ado_area_path }}" \
+            -ado_org "${{ github.event.inputs.ado-org }}" \
+            -ado_project "${{ github.event.inputs.ado-project }}" \
+            -ado_area_path "${{ github.event.inputs.ado_area_path }}" \
             $ado_migrate_closed_workitems_param \
             $ado_production_run_param \
             -gh_pat "$GH_PAT" \
-            -gh_org "${{ inputs.gh-org }}" \
-            -gh_repo "${{ inputs.gh-repo }}" \
+            -gh_org "${{ github.event.inputs.gh-org }}" \
+            -gh_repo "${{ github.event.inputs.gh-repo }}" \
             $gh_update_assigned_to_param \
-            -gh_assigned_to_user_suffix "${{ inputs.gh_assigned_to_user_suffix }}" \
+            -gh_assigned_to_user_suffix "${{ github.event.inputs.gh_assigned_to_user_suffix }}" \
             $gh_add_ado_comments_param
 
           echo "Migration finished."
