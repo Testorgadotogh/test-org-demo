@@ -162,7 +162,7 @@ try {
 # Configure Azure DevOps defaults
 Write-Info-Host "Configuring Azure DevOps defaults..."
 try {
-    az devops configure --defaults organization="https://dev.azure.com/$ado_org" project="$ado_project" 2>&1 | Out-Null
+    az devops configure --defaults organization="https://code.umcom.org/$ado_org" project="$ado_project" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Error-Host "Failed to configure Azure DevOps defaults. Check your ADO_PAT and organization/project names."
         exit 1
