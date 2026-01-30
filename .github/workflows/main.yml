@@ -59,6 +59,21 @@ jobs:
 
       - name: get gh version
         run: gh --version
+      - name: Install Azure DevOps Extension
+        run: |
+          az extension add --name azure-devops
+
+      - name: Login to Azure DevOps
+        run: |
+          echo "${{ secrets.ADO_PAT }}" | az devops login
+
+      - name: Configure Defaults
+        run: |
+          az devops configure --defaults organization=https://code.umcom.org/${{ github.event.inputs.ado-org }} project=${{ github.event.inputs.ado-project }}
+
+      - name: Force JSON output
+        run: |
+          az config set core.output=json
 
       # doesn't work with the (unofficial) issue migration API?
       # - uses: actions/create-github-app-token@v1
