@@ -1,3 +1,5 @@
+name: Migrate Work Items
+
 on:
   workflow_dispatch:
     inputs: 
@@ -45,9 +47,6 @@ on:
         required: true
         type: boolean
         default: true
-env:
-  ADO_PAT: '${{ secrets.ADO_PAT }}'
-  GH_PAT: '${{ secrets.GH_PAT }}'
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -76,6 +75,21 @@ jobs:
         shell: bash
         run: |
           echo "Starting migration..."
+          
+          # Verify PATs are set (without displaying actual values)
+          if [ -z "$ADO_PAT" ]; then
+            echo "ERROR: ADO_PAT is not set or empty!"
+            exit 1
+          else
+            echo "ADO_PAT is set (length: ${#ADO_PAT} characters)"
+          fi
+          
+          if [ -z "$GH_PAT" ]; then
+            echo "ERROR: GH_PAT is not set or empty!"
+            exit 1
+          else
+            echo "GH_PAT is set (length: ${#GH_PAT} characters)"
+          fi
 
           ado_migrate_closed_workitems_param=""
           ado_production_run_param=""
