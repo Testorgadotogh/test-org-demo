@@ -189,23 +189,8 @@ Write-Info-Host "WIQL Query: $wiql"
 
 # Query work items
 Write-Info-Host "Querying work items from Azure DevOps..."
-try {
-    $queryResult = az boards query --wiql $wiql 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error-Host "Failed to query work items. Error: $queryResult"
-        exit 1
-    }
-    $query = $queryResult | ConvertFrom-Json
-    if ($null -eq $query) {
-        Write-Error-Host "Failed to parse work items query result"
-        exit 1
-    }
-    Write-Success-Host "Found $($query.Count) work item(s) to migrate"
-} catch {
-    Write-Error-Host "Exception querying work items: $_"
-    exit 1
-}
 
+$query=az boards query --wiql $wiql | ConvertFrom-Json
 $count = 0;
 
 ForEach($workitem in $query) {
