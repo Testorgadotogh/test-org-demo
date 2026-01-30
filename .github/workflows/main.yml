@@ -45,7 +45,9 @@ on:
         required: true
         type: boolean
         default: true
-
+env:
+  ADO_PAT: '${{ secrets.ADO_PAT }}'
+  GH_PAT: '${{ secrets.GH_PAT }}'
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -68,30 +70,35 @@ jobs:
       #     owner: ${{ github.repository_owner }}
       
       - name: run migration
-      env:
+        env:
           ADO_PAT: ${{ secrets.ADO_PAT }}
           GH_PAT: ${{ secrets.GH_PAT }}
         shell: bash
         run: |
+          echo "Starting migration..."
+
           ado_migrate_closed_workitems_param=""
           ado_production_run_param=""
           gh_update_assigned_to_param=""
           gh_add_ado_comments_param=""
 
-          if [ "${{ github.event.inputs.ado_migrate_closed_workitems }}" == "true" ]; then
-            ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
-          fi
+          [ "${{ inputs.ado_migrate_closed_workitems }}" = "true" ] && ado_migrate_closed_workitems_param="--ado_migrate_closed_workitems"
+          [ "${{ inputs.ado_production_run }}" = "true" ] && ado_production_run_param="--ado_production_run"
+          [ "${{ inputs.gh_update_assigned_to }}" = "true" ] && gh_update_assigned_to_param="--gh_update_assigned_to"
+          [ "${{ inputs.gh_add_ado_comments }}" = "true" ] && gh_add_ado_comments_param="--gh_add_ado_comments"
 
-          if [ "${{ github.event.inputs.ado_production_run }}" == "true" ]; then
-            ado_production_run_param="--ado_production_run"
-          fi
+          pwsh ./ado_workitems_to_github_issues.ps1 \
+            -ado_pat "$ADO_PAT" \
+            -ado_org "${{ inputs.ado-org }}" \
+            -ado_project "${{ inputs.ado-project }}" \
+            -ado_area_path "${{ inputs.ado_area_path }}" \
+            $ado_migrate_closed_workitems_param \
+            $ado_production_run_param \
+            -gh_pat "$GH_PAT" \
+            -gh_org "${{ inputs.gh-org }}" \
+            -gh_repo "${{ inputs.gh-repo }}" \
+            $gh_update_assigned_to_param \
+            -gh_assigned_to_user_suffix "${{ inputs.gh_assigned_to_user_suffix }}" \
+            $gh_add_ado_comments_param
 
-          if [ "${{ github.event.inputs.gh_update_assigned_to }}" == "true" ]; then
-            gh_update_assigned_to_param="--gh_update_assigned_to"
-          fi
-
-          if [ "${{ github.event.inputs.gh_add_ado_comments }}" == "true" ]; then
-            gh_add_ado_comments_param="--gh_add_ado_comments"
-          fi
-
-          pwsh ./ado_workitems_to_github_issues.ps1 -ado_pat $ADO_PAT -ado_org "${{ github.event.inputs.ado-org }}" -ado_project "${{ github.event.inputs.ado-project }}" -ado_area_path "${{ github.event.inputs.ado_area_path }}" $ado_migrate_closed_workitems_param $ado_production_run_param -gh_pat "${{ secrets.GH_PAT }}" -gh_org "${{ github.event.inputs.gh-org }}" -gh_repo "${{ github.event.inputs.gh-repo }}" $gh_update_assigned_to_param -gh_assigned_to_user_suffix "${{ github.event.inputs.gh_assigned_to_user_suffix }}" $gh_add_ado_comments_param
+          echo "Migration finished."
