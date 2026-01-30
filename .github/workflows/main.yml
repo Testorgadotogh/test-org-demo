@@ -52,6 +52,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4 
+      
       - name: get az and az devops version
         run: az --version
 
