@@ -183,7 +183,8 @@ if (!$ado_migrate_closed_workitems) {
     Write-Info-Host "Including closed work items in migration"
 }
 
-$wiql = "select [ID], [Title], [System.Tags] from workitems where $closed_wiql[System.AreaPath] UNDER '$ado_area_path' and not [System.Tags] Contains 'copied-to-github' order by [ID]"
+#$wiql = "select [ID], [Title], [System.Tags] from workitems where $closed_wiql[System.AreaPath] UNDER '$ado_area_path' and not [System.Tags] Contains 'copied-to-github' order by [ID]"
+$wiql = "SELECT [System.Id], [System.Title] FROM WorkItems WHERE [System.TeamProject] = '$ado_project' ORDER BY [System.Id]"
 Write-Info-Host "WIQL Query: $wiql"
 
 # Query work items
